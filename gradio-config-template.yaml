@@ -1,0 +1,31 @@
+# MARGOT Gradio UI Configuration Template
+#
+# Edit the checkpoint path below to point to your trained model,
+# then run: python tools/hifisinger/gradio_ui.py --config gradio-config.yaml
+
+readme: |
+  # MARGOT - HiFiSinger Voice Conversion Demo 🎤
+
+  GitHub: [gdoscher/MARGOT](https://github.com/gdoscher/MARGOT)
+
+  ## How to Use
+  1. Upload your audio file or use microphone
+  2. Adjust pitch if needed (+/- semitones)
+  3. Click "Convert" and wait!
+
+  **Tip:** Use clean vocal audio for best results
+
+max_mixing_speakers: 3
+
+models:
+  - name: "My MARGOT Model"
+    config: "configs/svc_hifisinger_finetune.py"
+
+    # EDIT THIS: Point to your best checkpoint file
+    # Examples:
+    #   checkpoint: "logs/HiFiSVC/version_0/checkpoints/epoch=336-step=15500-valid_loss=0.9400.ckpt"
+    #   checkpoint: "checkpoints/my-model.ckpt"
+    #   checkpoint: "logs/HiFiSVC/version_0/checkpoints/"  (auto-selects latest)
+    checkpoint: "logs/HiFiSVC/version_0/checkpoints/"
+
+    readme: "Pretrained on Opencpop/M4Singer, finetuned on your dataset."
