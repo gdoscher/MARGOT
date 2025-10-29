@@ -65,7 +65,7 @@ The notebook will automatically:
 
 ## 🚀 Step 2: Open the Colab Notebook
 
-1. **Click here:** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fishaudio/fish-diffusion/blob/main/notebooks/train.ipynb)
+1. **Click here:** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/gdoscher/MARGOT/blob/main/notebooks/train.ipynb)
 
 2. **Select GPU Runtime:**
    - Menu: `Runtime` → `Change runtime type`
@@ -75,6 +75,8 @@ The notebook will automatically:
 3. **Verify GPU is active:**
    - Run **Cell 5** (Check GPU)
    - You should see: `GPU 0: Tesla T4 detected`
+
+**Note:** This MARGOT repository includes all optimizations built-in - no manual patching required!
 
 ---
 
@@ -117,175 +119,96 @@ pretrained = True  # ✅ Always use pretrained for best results!
 pretrained_profile = 'hifisinger-v2.1.0'  # ✅ Recommended model
 ```
 
+**Model Selection: HiFiSinger vs DiffSVC**
+
+Two pretrained models are available:
+- **HiFiSinger v2.1.0** (RECOMMENDED) - Fast GAN-based model
+- **DiffSVC v2.0.0** (Legacy) - Slower diffusion-based model
+
+**Use HiFiSinger v2.1.0 for:**
+- ✅ Small datasets (30-60 min audio)
+- ✅ Fast training (8k-16k steps optimal)
+- ✅ Real-time inference
+- ✅ Limited GPU time (Colab free tier)
+- ✅ Practical voice conversion
+
+**Only use DiffSVC v2.0.0 if:**
+- Large datasets (100+ min audio)
+- Can train for 50k-100k steps
+- Maximum quality is priority over speed
+- Research/experimental purposes
+
 **Why Pretrained?**
 - Starts from a model trained on thousands of hours
 - Reaches excellent quality in 8k-16k steps (vs 100k+ from scratch)
 - Your 30 min dataset fine-tunes the pretrained model
-- **Config now caps training at 20,000 steps** (optimal range based on analysis)
+- MARGOT configs include optimal settings (20k steps cap, fp16 precision, best 10 checkpoints)
 
 ---
 
-## 🛠️ Step 5: Fix Precision Issue (CRITICAL!)
+## 🎯 Step 5: Configure Training Steps
 
-**After Cell 20**, add a **new code cell** with this fix:
+**Run Cell 21** (Configure Training Steps - NEW!)
 
-```python
-#@title Fix Precision for T4 GPU
-# CRITICAL: T4 GPU doesn't support bf16 for STFT operations
-# This patches the base config to use fp16 instead
+This smart configuration cell analyzes your dataset and recommends optimal training duration:
 
-import re
+### What It Does:
 
-base_config = "/content/fish-diffusion/configs/_base_/trainers/base.py"
-print(f"📝 Patching {base_config}...")
+1. **Analyzes Your Dataset**
+   - Counts training files
+   - Estimates total audio duration
 
-with open(base_config, 'r') as f:
-    content = f.read()
+2. **Recommends Training Steps** based on dataset size:
+   - < 150 files (~15 min): **10,000 steps** (captures first peak)
+   - 150-300 files (~30 min): **20,000 steps** (both peaks)
+   - 300-450 files (~45 min): **25,000 steps** (extended training)
+   - > 450 files (~60+ min): **30,000 steps** (very large datasets)
 
-# Replace bf16-mixed with 16-mixed (fp16)
-original_content = content
-content = re.sub(r'precision\s*=\s*["\']bf16-mixed["\']', 'precision="16-mixed"', content)
+3. **Allows Manual Override**
+   - Set `custom_steps` if you want a specific duration
+   - Leave empty to use the smart recommendation
 
-with open(base_config, 'w') as f:
-    f.write(content)
+4. **Updates Config Files**
+   - Automatically patches both config files with your selected step count
+   - No manual editing required!
 
-if content != original_content:
-    print("✅ Fixed! Changed bf16-mixed → 16-mixed (fp16)")
-    print("   Base trainer config patched successfully")
-else:
-    print("ℹ️  No changes needed - precision already correct")
+### Example Output:
 
-# Verify the change
-with open(base_config, 'r') as f:
-    if '16-mixed' in f.read():
-        print("✅ Verified: Precision is now set to fp16")
+```
+======================================================================
+TRAINING STEPS CONFIGURATION
+======================================================================
+
+📊 Dataset Analysis:
+  • Training files: 252
+  • Estimated duration: ~30 minutes
+
+💡 Recommended Settings:
+  • Training steps: 20,000
+  • Rationale: Medium dataset - captures both optimal peaks (7k-8k and 15k-16k)
+  • Estimated time: 10-12 hours on T4 GPU
+
+✅ Using recommended setting: 20,000 steps
+======================================================================
+
+🎯 TRAINING CONFIGURED FOR 20,000 STEPS
+======================================================================
+
+📈 What to expect:
+  • Total checkpoints: ~40 (every 500 steps)
+  • Best 10 checkpoints will be kept automatically
+  • Validation every 500 steps for precise peak capture
+
+🏆 Expected optimal checkpoints:
+  • First peak: around steps 7,000-8,000
+  • Second peak: around steps 15,000-16,000
 ```
 
-**Why This is Needed:**
-T4 GPUs don't support bfloat16 for certain audio operations. This fix prevents the error:
-```
-RuntimeError: cuFFT doesn't support tensor of type: BFloat16
-```
-
----
-
-## 🔧 Step 5b: Fix Checkpoint Management (IMPORTANT!)
-
-**After the precision fix**, add another **new code cell** to fix checkpoint retention:
-
-```python
-#@title Fix Checkpoint Management - Keep Best 10 by Validation Loss
-# This patches colab_train.py to keep the 10 BEST checkpoints by validation loss
-# instead of only keeping the last 4 by time
-
-import re
-
-colab_train_file = "/content/fish-diffusion/tools/hifisinger/colab_train.py"
-print(f"📝 Patching {colab_train_file}...")
-
-with open(colab_train_file, 'r') as f:
-    content = f.read()
-
-# Add get_valid_loss function after get_step
-if 'def get_valid_loss(' not in content:
-    get_valid_loss_func = '''
-
-def get_valid_loss(filename):
-    """Extract validation loss from checkpoint filename."""
-    match = re.search(r"valid_loss=([\\d.]+)", filename)
-    if match:
-        loss_str = match.group(1).rstrip('.')
-        try:
-            return float(loss_str)
-        except ValueError:
-            return float('inf')
-    return float('inf')  # If no valid_loss in filename, treat as worst
-'''
-
-    content = content.replace(
-        'def get_step(filename):\n    match = re.search(r"step=(\\d+)", filename)\n    return int(match.group(1)) if match else -1',
-        'def get_step(filename):\n    match = re.search(r"step=(\\d+)", filename)\n    return int(match.group(1)) if match else -1' + get_valid_loss_func
-    )
-    print("  ✅ Added get_valid_loss() function")
-
-# Fix local checkpoint cleanup (keep best 10 by loss)
-old_local_cleanup = re.search(
-    r'# Keep only the last four checkpoints.*?os\.remove\(checkpoint\)',
-    content,
-    re.DOTALL
-)
-
-if old_local_cleanup and 'best 10' not in old_local_cleanup.group(0):
-    new_local_cleanup = '''# Keep only the best 10 checkpoints by validation loss in the source checkpoint directory
-        for d in os.listdir(fishsvc_chkpt_path):
-            checkpoints_path = os.path.join(fishsvc_chkpt_path, d, "checkpoints")
-            if os.path.exists(checkpoints_path):
-                checkpoints = [
-                    os.path.join(checkpoints_path, f)
-                    for f in os.listdir(checkpoints_path)
-                    if f.endswith('.ckpt') and ".ipynb_checkpoints" not in f
-                ]
-                checkpoints_sorted = sorted(checkpoints, key=get_valid_loss)
-                for checkpoint in checkpoints_sorted[10:]:
-                    try:
-                        os.remove(checkpoint)
-                        logging.info("Deleted checkpoint (not in top 10): %s", os.path.basename(checkpoint))
-                    except Exception as e:
-                        logging.warning("Failed to delete %s: %s", checkpoint, e)'''
-
-    content = re.sub(
-        r'# Keep only the last four checkpoints.*?os\.remove\(checkpoint\)',
-        new_local_cleanup,
-        content,
-        count=1,
-        flags=re.DOTALL
-    )
-    print("  ✅ Fixed local checkpoint cleanup (keep best 10)")
-
-# Fix Google Drive checkpoint cleanup (keep best 10 by loss)
-old_drive_cleanup = re.search(
-    r'# Keep only the last four checkpoints in the destination.*?os\.remove\(checkpoint\)',
-    content,
-    re.DOTALL
-)
-
-if old_drive_cleanup and 'best 10' not in old_drive_cleanup.group(0):
-    new_drive_cleanup = '''# Keep only the best 10 checkpoints by validation loss in Google Drive
-            models_path = os.path.join(fishsvc_dest_path, "models")
-            if os.path.exists(models_path):
-                checkpoints = [
-                    os.path.join(models_path, f)
-                    for f in os.listdir(models_path)
-                    if f.endswith('.ckpt')
-                ]
-                checkpoints_sorted = sorted(checkpoints, key=get_valid_loss)
-                for checkpoint in checkpoints_sorted[10:]:
-                    try:
-                        os.remove(checkpoint)
-                        logging.info("Deleted Drive checkpoint (not in top 10): %s", os.path.basename(checkpoint))
-                    except Exception as e:
-                        logging.warning("Failed to delete Drive checkpoint %s: %s", checkpoint, e)'''
-
-    content = re.sub(
-        r'# Keep only the last four checkpoints in the destination.*?os\.remove\(checkpoint\)',
-        new_drive_cleanup,
-        content,
-        count=1,
-        flags=re.DOTALL
-    )
-    print("  ✅ Fixed Google Drive checkpoint cleanup (keep best 10)")
-
-with open(colab_train_file, 'w') as f:
-    f.write(content)
-
-print("\n✅ Checkpoint management fixed!")
-print("   • Keeps best 10 checkpoints by validation loss")
-print("   • Captures both optimal peaks (7k-8k and 15k-16k)")
-print("   • No manual downloads needed!")
-```
-
-**Why This is Needed:**
-The default Colab training script only keeps the last 4 checkpoints by time, deleting earlier optimal checkpoints. This fix ensures you keep the 10 best checkpoints by validation loss, capturing both optimal training peaks automatically.
+**Note:** All MARGOT optimizations are built into the repository:
+- ✅ T4 GPU precision (fp16) - no manual fix needed
+- ✅ Best 10 checkpoint retention - automatic
+- ✅ 500-step validation frequency - pre-configured
+- ✅ Optimal training settings - ready to go
 
 ---
 
@@ -419,7 +342,7 @@ The training script now automatically:
 
 This means you'll always have the top 10 performing models saved automatically!
 
-**⚠️ Important:** This fix requires patching `tools/hifisinger/colab_train.py`. See the fix cell in the notebook setup section.
+**✅ Note:** This checkpoint management is built into the MARGOT repository - no patching required!
 
 ### Where Are Checkpoints Saved?
 
@@ -494,8 +417,9 @@ checkpoint_path = "/content/fish-diffusion/logs/HiFiSVC/version_0/checkpoints"
 ### Training Errors
 
 **Error: `RuntimeError: cuFFT doesn't support tensor of type: BFloat16`**
-- **Solution:** You forgot Step 5 (precision fix)!
-- Add the precision fix cell and restart training
+- **Solution:** You're using an outdated repository!
+- Make sure you cloned from `github.com/gdoscher/MARGOT` (includes fp16 fix)
+- If using the original fishaudio repo, switch to MARGOT instead
 
 **Error: `CUDA out of memory`**
 - **Solution:** Reduce batch size in config
@@ -594,9 +518,9 @@ Step 27k+: 0.948+  ⚠️ (degrading)
 4. ✅ Cell 16: Download vocoder
 5. ✅ Cell 18: Load & preprocess dataset (~20 minutes)
 6. ✅ Cell 20: Select model (HiFiSinger pretrained)
-7. ✅ **NEW CELL**: Precision fix (CRITICAL!)
+7. ✅ Cell 21: **Configure training steps** (smart recommendations - NEW!)
 8. ✅ Cell 23: Extract features (~15 minutes)
-9. ✅ Cell 25: Start training! (8-12 hours to 15k steps)
+9. ✅ Cell 25: Start training! (8-12 hours for 20k steps)
 10. ✅ Cell 28: Inference/testing
 
 ### Key Files & Locations
@@ -623,12 +547,12 @@ Step 27k+: 0.948+  ⚠️ (degrading)
 
 - [ ] Dataset prepared and uploaded to Drive
 - [ ] GPU runtime selected (T4)
-- [ ] Precision fix applied (Step 5)
+- [ ] Training steps configured (Step 5)
 - [ ] Features extracted successfully
 - [ ] Training running without errors
 - [ ] TensorBoard showing progress
 - [ ] Audio samples sound excellent at step 5k-10k
-- [ ] Checkpoints saving to Google Drive
+- [ ] Checkpoints saving to Google Drive automatically (best 10 by validation loss)
 - [ ] Final model tested with Gradio UI
 
 **Congratulations! You've trained a custom voice conversion model!** 🎤🎵
