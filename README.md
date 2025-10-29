@@ -1,4 +1,4 @@
-# Fish-Diffusion: Voice Conversion Training
+# MARGOT - Optimized Fish-Diffusion for Voice Conversion
 
 <div align="center">
   <img src="https://cdn.jsdelivr.net/gh/fishaudio/fish-diffusion@main/images/logo_512x512.png" width="256" height="256" alt="Fish Diffusion Logo"/>
@@ -6,267 +6,302 @@
 
 <div align="center">
 
-[![Discord](https://img.shields.io/discord/1044927142900809739?color=%23738ADB&label=Discord&logo=discord&logoColor=white&style=flat-square)](https://discord.gg/wbYSRBrW2E)
-[![Open In Colab](https://img.shields.io/static/v1?label=Colab&message=Train%20Now&color=F9AB00&logo=googlecolab&style=flat-square)](https://colab.research.google.com/github/fishaudio/fish-diffusion/blob/main/notebooks/train.ipynb)
-[![Hugging Face](https://img.shields.io/badge/🤗%20Spaces-HiFiSinger-blue.svg?style=flat-square)](https://huggingface.co/spaces/fishaudio/fish-diffusion)
+[![Open In Colab](https://img.shields.io/static/v1?label=Colab&message=Train%20Now&color=F9AB00&logo=googlecolab&style=flat-square)](https://colab.research.google.com/github/gdoscher/MARGOT/blob/main/notebooks/train.ipynb)
+[![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg?style=flat-square)](LICENSE)
+[![Discord](https://img.shields.io/discord/1044927142900809739?color=%23738ADB&label=Fish%20Audio%20Discord&logo=discord&logoColor=white&style=flat-square)](https://discord.gg/wbYSRBrW2E)
+
+**Production-ready voice conversion training optimized for Google Colab**
+
+[Quick Start](#-quick-start) • [What's Different](#-whats-different-from-original) • [Training Guide](COLAB_TRAINING_GUIDE.md) • [Results](#-expected-results)
 
 </div>
 
 ---
 
-## 🎯 Overview
+## 🎯 What is MARGOT?
 
-Fish-Diffusion is a state-of-the-art voice conversion system using **HiFiSinger** (GAN-based) and **DiffSVC** (diffusion-based) architectures. This repository contains tools for training custom voice conversion models on your own datasets.
+**MARGOT** is an optimized fork of [fish-diffusion](https://github.com/fishaudio/fish-diffusion) specifically configured for hassle-free voice conversion training on **Google Colab's free T4 GPU**.
 
-**Recommended Approach:** Use the official **Google Colab notebook** for GPU training - no local setup required!
+Train a custom voice conversion model with just **30 minutes of audio** in **8-12 hours** - no local GPU required!
+
+### Key Improvements
+
+✅ **Works out-of-the-box on Colab T4 GPUs** - fp16 precision (no more bf16 errors)
+✅ **Smart checkpoint management** - keeps best 10 models by validation loss (4-decimal precision)
+✅ **Intelligent training duration** - auto-recommends steps based on your dataset size
+✅ **Optimized validation frequency** - 500-step intervals capture both quality peaks (7k-8k & 15k-16k)
+✅ **Comprehensive training guide** - step-by-step instructions with troubleshooting
+✅ **All fixes permanent** - no runtime patching required
 
 ---
 
-## ⚡ Quick Start (Recommended)
+## ⚡ Quick Start
 
-### 1. Prepare Your Dataset Locally
-```bash
-# Your audio files should be:
-# - Single speaker
-# - Clean vocals (no background music)
-# - WAV format (44.1kHz recommended)
-# - 30+ minutes total duration
+### 1️⃣ Prepare Your Dataset
 
-# Upload as ZIP with this structure:
+Create a ZIP file with your audio:
+
+```
 dataset.zip
 ├── train/
-│   └── *.wav files
+│   └── *.wav files (6-8 sec each, 30-60 min total)
 └── valid/
-    └── *.wav files (5-10 files recommended)
+    └── *.wav files (5-10 samples)
 ```
 
-### 2. Train on Google Colab (FREE GPU!)
+**Requirements:**
+- Single speaker only
+- Clean vocals (no background music)
+- WAV format, 44.1kHz recommended
+- 30+ minutes total (more is better!)
 
-**Click here:** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fishaudio/fish-diffusion/blob/main/notebooks/train.ipynb)
+### 2️⃣ Upload to Google Drive
 
-**Key Settings:**
-- **Model:** HiFiSinger v2.1.0 (pretrained, recommended)
-- **Dataset:** Upload your `dataset.zip` to Google Drive at `/MyDrive/Fish Diffusion/dataset.zip`
-- **Training Duration:** Automatic stop at 20,000 steps (~10-12 hours on T4 GPU)
-- **Checkpoints:** Best 10 checkpoints saved automatically (by validation loss)
-- **Important:** Apply the checkpoint management fix from the training guide (Step 5b)
+1. Go to [Google Drive](https://drive.google.com)
+2. Create folder: `Fish Diffusion`
+3. Upload your `dataset.zip`
+4. Path should be: `/MyDrive/Fish Diffusion/dataset.zip`
 
-### 3. Monitor Training
+### 3️⃣ Start Training on Colab (FREE!)
 
-TensorBoard launches automatically in the notebook. Monitor:
-- 🎧 **Audio Tab:** Listen to prediction samples (most important!)
-- 📊 **train_loss_aux:** Should decrease steadily
-- 📉 **valid_loss_epoch:** Lower = better quality (bounces for GAN models)
+**Click here:** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/gdoscher/MARGOT/blob/main/notebooks/train.ipynb)
 
-### 4. Training Completes Automatically
+**Select GPU Runtime:**
+- Runtime → Change runtime type → GPU (T4) → Save
 
-**Training stops automatically at 20,000 steps** (optimal range). The config keeps the **best 10 checkpoints** based on validation loss, so you'll always have the highest quality models saved!
+**Run the cells in order - that's it!** 🎉
+
+All optimizations are built-in. No manual fixes needed.
+
+### 4️⃣ Monitor & Download
+
+- **TensorBoard** launches automatically - listen to audio samples!
+- Training stops automatically at optimal step count (typically 20k steps)
+- **Best 10 checkpoints** saved to Google Drive at `/MyDrive/FishSVC/models/`
+- Use the checkpoint with the **lowest validation loss** (e.g., `valid_loss=0.9400`)
+
+📖 **Full guide:** [COLAB_TRAINING_GUIDE.md](COLAB_TRAINING_GUIDE.md)
 
 ---
 
 ## 📊 Expected Results
 
-### With Optimized Dataset (30 min audio, 6-8 sec chunks):
+### Real Results from 252 Files (~30 min audio):
 
 | Steps | Quality | Valid Loss | Notes |
 |-------|---------|------------|-------|
-| 1,000 | Good | 0.980 | Recognizable voice, some artifacts |
-| 4,000 | Very Good | 0.948 | Clear voice, minimal artifacts |
-| **8,000** | **🏆 Optimal** | **0.942** | **Peak quality - absolute best** |
-| 12,000 | Excellent | 0.952 | High quality, slight overtraining |
-| **16,000** | **🏆 Optimal** | **0.942** | **Second peak - tied for best** |
-| 20,000 | Very Good | 0.948 | Auto-stops, still good quality |
+| 1,000 | Good | 0.9796 | Recognizable voice |
+| 4,000 | Very Good | 0.9475 | *"Hard to believe how good!"* |
+| **7,999** | **🏆 PEAK #1** | **0.9420** | **Absolute best - first optimal peak** |
+| 9,000 | Excellent | 0.9505 | Slight overtraining begins |
+| **15,999** | **🏆 PEAK #2** | **0.9422** | **Nearly optimal - second peak** |
+| 20,000 | Very Good | 0.9475 | Auto-stops, still excellent |
+| 54,000+ | ⚠️ Overtrained | 0.948+ | Reverb artifacts, less tight |
 
-**Real User Results:**
-- *"Honestly hard to believe how good these prediction files sound at step 4000, this is crazy."*
-- Step 8,000 and 16,000 checkpoints typically produce the best results
-- Overtraining starts after step 8,000 but model recovers around step 16,000
+**Key Insight:** Validation loss hits absolute minimum at step 7,999, then oscillates. Model recovers around step 15,999 but never quite beats the first peak. **MARGOT keeps both automatically!**
+
+### Timeline (T4 GPU)
+
+- **1,000 steps:** ~45 minutes
+- **8,000 steps:** ~4-6 hours (first optimal peak)
+- **16,000 steps:** ~8-10 hours (second optimal peak)
+- **20,000 steps:** ~10-12 hours (automatic stop)
 
 ---
 
-## 🛠️ Advanced: Local Setup
+## 🆚 What's Different from Original?
+
+This fork includes production-ready optimizations for Colab training:
+
+### Configuration Changes
+
+| Setting | Original | MARGOT | Why? |
+|---------|----------|--------|------|
+| **Precision** | bf16-mixed | **fp16 (16-mixed)** | T4 GPU compatibility |
+| **Max Steps** | 2,000,000 | **20,000** | Optimal for pretrained fine-tuning |
+| **Validation Frequency** | 5,000 steps | **500 steps** | Captures quality peaks precisely |
+| **Checkpoint Frequency** | Varies | **500 steps** | 2x granularity |
+| **Checkpoint Retention** | Last 4 by time | **Best 10 by loss** | Keeps optimal models |
+| **Loss Precision** | 2 decimals (.2f) | **4 decimals (.4f)** | Proper sorting (0.9420 vs 0.9422) |
+
+### New Features
+
+✨ **Smart Training Steps Cell** - Analyzes dataset size and recommends optimal duration:
+- < 150 files (~15 min): 10,000 steps
+- 150-300 files (~30 min): 20,000 steps
+- 300-450 files (~45 min): 25,000 steps
+- > 450 files (~60+ min): 30,000 steps
+
+✨ **Comprehensive Training Guide** - [COLAB_TRAINING_GUIDE.md](COLAB_TRAINING_GUIDE.md) with:
+- Complete step-by-step instructions
+- Troubleshooting section
+- Expected results and timelines
+- HiFiSinger vs DiffSVC comparison
+
+✨ **Updated Colab Notebook** - Clones from MARGOT repo with all fixes built-in
+
+### Files Modified
+
+- `configs/_base_/trainers/base.py` - Core training settings
+- `configs/svc_hifisinger_finetune.py` - HiFiSinger-specific config
+- `tools/hifisinger/colab_train.py` - Checkpoint management
+- `notebooks/train.ipynb` - Training notebook
+- `COLAB_TRAINING_GUIDE.md` - Comprehensive guide (new)
+- `PROJECT_SUMMARY.md` - Technical analysis (new)
+
+---
+
+## 🎓 Model Selection: HiFiSinger vs DiffSVC
+
+**TL;DR: Use HiFiSinger v2.1.0** (the default)
+
+### HiFiSinger v2.1.0 (RECOMMENDED)
+
+- **Type:** GAN-based (fast)
+- **Best for:** 30-60 min datasets
+- **Training time:** 8-12 hours to peak quality
+- **Inference:** Real-time capable
+- **Quality:** Excellent at 8k-16k steps
+
+### DiffSVC v2.0.0 (Legacy)
+
+- **Type:** Diffusion-based (slow but stable)
+- **Best for:** 100+ min datasets, research
+- **Training time:** 20+ hours (50k-100k steps)
+- **Inference:** Slower (iterative denoising)
+- **Quality:** Highest possible, but requires much more time
+
+**For Colab free tier with limited datasets, HiFiSinger is the clear choice.**
+
+---
+
+## 📚 Documentation
+
+- **[COLAB_TRAINING_GUIDE.md](COLAB_TRAINING_GUIDE.md)** - Complete training walkthrough
+- **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)** - Technical analysis and decisions
+- **[Original Wiki](https://fishaudio.github.io/fish-diffusion/)** - Fish-Diffusion documentation
+
+---
+
+## 🛠️ Advanced: Local Training
 
 <details>
 <summary>Click to expand local installation instructions</summary>
 
 ### Prerequisites
+
 - Python 3.10
-- CUDA-compatible GPU (8GB+ VRAM recommended)
+- CUDA-compatible GPU (8GB+ VRAM)
 - Linux or macOS
 
 ### Installation
+
 ```bash
-# Clone repository
-git clone https://github.com/fishaudio/fish-diffusion.git
-cd fish-diffusion
+# Clone MARGOT repository
+git clone https://github.com/gdoscher/MARGOT.git
+cd MARGOT
 
-# Install PDM
-curl -sSL https://raw.githubusercontent.com/pdm-project/pdm/main/install-pdm.py | python3 -
+# Install dependencies using PDM
+pip install pdm
+pdm install
 
-# Install dependencies
-pdm sync
-```
-
-### Vocoder Preparation
-```bash
-# Download NSF-HiFiGAN vocoder (required for DiffSVC)
+# Download pretrained vocoder
 python tools/download_nsf_hifigan.py --agree-license
 ```
 
-### Local Training
+### Prepare Dataset
+
 ```bash
 # Extract features
 python tools/preprocessing/extract_features.py \
     --config configs/svc_hifisinger_finetune.py \
-    --path dataset/train --clean
-
-python tools/preprocessing/extract_features.py \
-    --config configs/svc_hifisinger_finetune.py \
-    --path dataset/valid --clean --no-augmentation
-
-# Train
-python tools/hifisinger/train.py \
-    --config configs/svc_hifisinger_finetune.py \
-    --pretrain checkpoints/hifisinger-pretrained.ckpt \
-    --tensorboard
+    --path dataset/train \
+    --clean \
+    --num-workers 4
 ```
 
-### Local Inference
-```bash
-# Using Gradio UI
-python tools/hifisinger/inference.py \
-    --config configs/svc_hifisinger_finetune.py \
-    --checkpoint logs/HiFiSVC/version_0/checkpoints/best.ckpt \
-    --gradio --gradio_share
+### Train Locally
 
-# Command line
-python tools/hifisinger/inference.py \
+```bash
+python tools/hifisinger/train.py \
     --config configs/svc_hifisinger_finetune.py \
-    --checkpoint logs/HiFiSVC/version_0/checkpoints/best.ckpt \
-    --input input.wav \
-    --output output.wav
+    --pretrain checkpoints/hifisinger-pretrained.ckpt
+```
+
+Monitor with TensorBoard:
+```bash
+tensorboard --logdir logs/
 ```
 
 </details>
 
 ---
 
-## 📚 Documentation
+## 🤝 Credits & License
 
-- **[Colab Training Guide](COLAB_TRAINING_GUIDE.md)** - Detailed Colab workflow with troubleshooting
-- **[Project Summary](PROJECT_SUMMARY.md)** - Technical architecture and model details
-- **[Official Wiki](https://fishaudio.github.io/fish-diffusion/)** - Complete documentation
+### MARGOT Fork
 
----
+- **Maintainer:** [@gdoscher](https://github.com/gdoscher)
+- **Purpose:** Production-ready Colab training optimizations
+- **Based on:** [fish-diffusion](https://github.com/fishaudio/fish-diffusion) by Fish Audio
 
-## 🎵 Model Architectures
+### Original Fish-Diffusion
 
-### HiFiSinger (Recommended)
-- **Type:** GAN-based (Generator + Discriminator)
-- **Speed:** Fast training and inference
-- **Quality:** Excellent with pretrained model
-- **Best For:** Quick results, fine-tuning on small datasets
+- **Authors:** Fish Audio Team
+- **Repository:** https://github.com/fishaudio/fish-diffusion
+- **Discord:** https://discord.gg/wbYSRBrW2E
 
-### DiffSVC
-- **Type:** Diffusion-based
-- **Speed:** Slower training/inference
-- **Quality:** Very high quality, more stable
-- **Best For:** Maximum quality, larger datasets
+### License
 
----
+This project inherits the [CC BY-NC-SA 4.0](LICENSE) license from fish-diffusion:
 
-## 💡 Tips for Best Results
+- ✅ You can use for research and personal projects
+- ✅ You must credit Fish Audio and this fork
+- ✅ Share-alike: derivatives must use same license
+- ❌ No commercial use without permission
 
-### Dataset Quality
-✅ **Do:**
-- Use clean vocal recordings (no background music)
-- Consistent recording quality
-- 30+ minutes total audio
-- Diverse phonetic content
-- 6-8 second audio chunks
-
-❌ **Don't:**
-- Mix multiple recording qualities
-- Include silence/noise
-- Use compressed audio formats (MP3)
-- Use clips longer than 15 seconds
-
-### Training Duration
-- **HiFiSinger with pretrained:** 10,000-15,000 steps typical
-- **DiffSVC from scratch:** 50,000-100,000 steps
-- **Monitor audio quality** - numbers can be misleading for GANs!
-
-### Hardware
-- **Minimum:** T4 GPU (15GB VRAM) - Free on Google Colab!
-- **Recommended:** V100 or A100 for faster training
-- **Batch Size:** 32 for HiFiSinger, 16 for DiffSVC
+**Attribution Required:** When sharing models or results, credit both:
+- Original project: Fish-Diffusion by Fish Audio
+- This fork: MARGOT optimized configurations
 
 ---
 
-## 📄 Terms of Use
+## 📞 Support & Contributing
 
-1. **Authorization Required:** You are solely responsible for obtaining rights to any training data used and assume full responsibility for any infringement issues.
+### Getting Help
 
-2. **Proper Attribution:** All derivative works must explicitly acknowledge Fish-Diffusion and its license. You must cite the original author and source code.
+- 📖 Read [COLAB_TRAINING_GUIDE.md](COLAB_TRAINING_GUIDE.md) first
+- 💬 Join [Fish Audio Discord](https://discord.gg/wbYSRBrW2E) for community support
+- 🐛 [Open an issue](https://github.com/gdoscher/MARGOT/issues) for bugs
 
-3. **AI-generated Disclosure:** All derivative works must declare that content is AI-generated and acknowledge the Fish-Diffusion project.
+### Contributing
 
-4. **Agreement to Terms:** By using Fish-Diffusion, you unequivocally consent to these terms. Neither Fish-Diffusion nor its developers shall be held liable for any subsequent difficulties that may transpire.
+Contributions welcome! Areas of interest:
 
----
-
-## 🤝 Contributing
-
-If you have any questions, please submit an issue or pull request.
-You should run `pdm run lint` before submitting a pull request.
-
-Real-time documentation can be generated by:
-```bash
-pdm run docs
-```
+- Further Colab optimizations
+- Dataset preprocessing improvements
+- Training efficiency enhancements
+- Documentation improvements
 
 ---
 
-## ⭐ Support
+## ⚠️ Terms of Use
 
-If you find this project useful, please:
-- ⭐ Star this repository
-- 💬 Join our [Discord community](https://discord.gg/wbYSRBrW2E)
-- 🐛 Report issues on GitHub
-- 📢 Share your results!
+1. **Authorization Required:** You are responsible for obtaining permission to use any voice data in your training dataset
+2. **Attribution:** Credit Fish-Diffusion and declare AI-generated content when sharing results
+3. **Ethical Use:** Do not create deepfakes or use for malicious purposes
+4. **No Liability:** Neither Fish-Diffusion nor MARGOT developers are responsible for misuse
 
----
-
-## 🙏 Credits
-
-+ [diff-svc original](https://github.com/prophesier/diff-svc)
-+ [diff-svc optimized](https://github.com/innnky/diff-svc/)
-+ [DiffSinger](https://github.com/openvpi/DiffSinger/) [Paper](https://arxiv.org/abs/2105.02446)
-+ [so-vits-svc](https://github.com/innnky/so-vits-svc)
-+ [iSTFTNet](https://github.com/rishikksh20/iSTFTNet-pytorch) [Paper](https://arxiv.org/pdf/2203.02395.pdf)
-+ [HiFi-GAN](https://github.com/jik876/hifi-gan) [Paper](https://arxiv.org/abs/2010.05646)
-+ [Retrieval-based-Voice-Conversion](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI)
-
----
-
-## Thanks to all contributors
-
-<a href="https://github.com/fishaudio/fish-diffusion/graphs/contributors" target="_blank">
-  <img src="https://contrib.rocks/image?repo=fishaudio/fish-diffusion" />
-</a>
-
----
-
-## 📜 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+By using MARGOT, you agree to use it responsibly and ethically.
 
 ---
 
 <div align="center">
-  <strong>Made with ❤️ by Fish Audio</strong>
-  <br/>
-  <a href="https://github.com/fishaudio/fish-diffusion">GitHub</a> •
-  <a href="https://discord.gg/wbYSRBrW2E">Discord</a> •
-  <a href="https://fishaudio.github.io/fish-diffusion/">Docs</a>
+
+**Ready to train your voice model?**
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/gdoscher/MARGOT/blob/main/notebooks/train.ipynb)
+
+⭐ **Star this repo if MARGOT helped you!** ⭐
+
 </div>
