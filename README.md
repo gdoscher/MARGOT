@@ -1,14 +1,9 @@
 # MARGOT - Optimized Fish-Diffusion for Voice Conversion
 
-<div align="center">
-  <img src="https://cdn.jsdelivr.net/gh/fishaudio/fish-diffusion@main/images/logo_512x512.png" width="256" height="256" alt="Fish Diffusion Logo"/>
-</div>
-
-<div align="center">
 
 [![Open In Colab](https://img.shields.io/static/v1?label=Colab&message=Train%20Now&color=F9AB00&logo=googlecolab&style=flat-square)](https://colab.research.google.com/github/gdoscher/MARGOT/blob/main/notebooks/train.ipynb)
 [![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg?style=flat-square)](LICENSE)
-[![Discord](https://img.shields.io/discord/1044927142900809739?color=%23738ADB&label=Fish%20Audio%20Discord&logo=discord&logoColor=white&style=flat-square)](https://discord.gg/wbYSRBrW2E)
+
 
 **Production-ready voice conversion training optimized for Google Colab**
 
