@@ -48,10 +48,10 @@ trainer = dict(
     max_steps=20000,  # MARGOT: Optimal for 30min datasets (user configurable in notebook)
     callbacks=[
         ModelCheckpoint(
-            filename="{epoch}-{step}-{valid_loss:.2f}",
+            filename="{epoch}-{step}-{valid_loss:.4f}",  # MARGOT: 4 decimals for proper sorting (e.g., 0.9420)
             every_n_train_steps=500,  # MARGOT: Save every 500 steps (2x granularity)
             save_top_k=10,  # MARGOT: Keep best 10 checkpoints by validation loss
-            monitor="valid_loss_epoch",  # MARGOT: Sort by validation loss
+            monitor="valid_loss_epoch",  # MARGOT: Sort by validation loss (epoch-level metric)
             mode="min",  # MARGOT: Lower validation loss is better
         ),
         LearningRateMonitor(logging_interval="step"),

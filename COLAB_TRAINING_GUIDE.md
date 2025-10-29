@@ -350,11 +350,11 @@ This means you'll always have the top 10 performing models saved automatically!
 ```
 /MyDrive/FishSVC/
 └── models/
-    ├── epoch=X-step=7500-valid_loss=0.942.ckpt  ← Best 10 by loss
-    ├── epoch=X-step=8000-valid_loss=0.942.ckpt  ← Often optimal
-    ├── epoch=X-step=15500-valid_loss=0.940.ckpt ← Usually best
-    ├── epoch=X-step=16000-valid_loss=0.940.ckpt
-    ├── epoch=X-step=10000-valid_loss=0.945.ckpt
+    ├── epoch=X-step=7500-valid_loss=0.9420.ckpt  ← Best 10 by loss
+    ├── epoch=X-step=8000-valid_loss=0.9422.ckpt  ← Often optimal
+    ├── epoch=X-step=15500-valid_loss=0.9400.ckpt ← Usually best
+    ├── epoch=X-step=16000-valid_loss=0.9405.ckpt
+    ├── epoch=X-step=10000-valid_loss=0.9450.ckpt
     └── ... (10 total checkpoints with lowest loss)
 ```
 
@@ -363,17 +363,18 @@ This means you'll always have the top 10 performing models saved automatically!
 ### Checkpoint Naming
 
 ```
-epoch=178-step=7999-valid_loss=0.94.ckpt
+epoch=178-step=7999-valid_loss=0.9420.ckpt
   ^       ^           ^
-  |       |           └─ Validation loss (lower = better)
+  |       |           └─ Validation loss (4 decimals for precise sorting)
   |       └─ Training step number
   └─ Epoch number
 ```
 
 **Which checkpoint to use?**
 - **The checkpoint with the LOWEST valid_loss** is typically the best
-- Usually from step 7,500-8,000 (valid_loss ~0.942) or 15,500-16,000 (valid_loss ~0.940-0.942)
+- Usually from step 7,500-8,000 (valid_loss ~0.9420) or 15,500-16,000 (valid_loss ~0.9400-0.9422)
 - All top 10 checkpoints are automatically preserved
+- With 4 decimal precision, you can distinguish between 0.9420, 0.9422, 0.9450, etc.
 - Listen to audio quality to confirm - validation loss correlates strongly with quality
 - Compare your top 3-4 checkpoints to find the best sound
 
