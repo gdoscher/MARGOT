@@ -156,3 +156,16 @@ exported
 pitches_editor
 .pdm-python
 .pgx.*
+
+# MARGOT-specific exclusions
+# Exclude datasets and archives
+*.zip
+dataset*/
+*dataset*/
+
+# Exclude personal/experimental notebooks (keep official notebooks/ folder)
+/train*.ipynb
+train (final).ipynb
+
+# Exclude helper files
+notebook_cell_*.py

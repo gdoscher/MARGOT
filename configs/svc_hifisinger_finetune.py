@@ -43,16 +43,16 @@ preprocessing = dict(
 trainer = dict(
     # Disable gradient clipping, which is not supported by custom optimization
     gradient_clip_val=None,
-    val_check_interval=1000,
+    val_check_interval=500,  # MARGOT: Validate every 500 steps for better checkpoint selection
     check_val_every_n_epoch=None,
-    max_steps=20000,  # Stop training at 20k steps (optimal range based on analysis)
+    max_steps=20000,  # MARGOT: Optimal for 30min datasets (user configurable in notebook)
     callbacks=[
         ModelCheckpoint(
             filename="{epoch}-{step}-{valid_loss:.2f}",
-            every_n_train_steps=1000,
-            save_top_k=10,  # Keep best 10 checkpoints by validation loss
-            monitor="valid_loss_epoch",  # Sort by validation loss
-            mode="min",  # Lower validation loss is better
+            every_n_train_steps=500,  # MARGOT: Save every 500 steps (2x granularity)
+            save_top_k=10,  # MARGOT: Keep best 10 checkpoints by validation loss
+            monitor="valid_loss_epoch",  # MARGOT: Sort by validation loss
+            mode="min",  # MARGOT: Lower validation loss is better
         ),
         LearningRateMonitor(logging_interval="step"),
     ],
