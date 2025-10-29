@@ -5,45 +5,48 @@ Prompts user for all required parameters.
 """
 
 import os
-import glob
 import torch
 from pathlib import Path
 from inference import HiFiSingerSVCInference
 from mmengine import Config
 
 
-def find_checkpoints(directory=None):
-    """Find all checkpoint files in common locations."""
-    search_paths = [
-        "logs/HiFiSVC/*/checkpoints/*.ckpt",
-        "checkpoints/*.ckpt",
-        "../../../checkpoints/*.ckpt",
-    ]
-
-    if directory:
-        search_paths.insert(0, os.path.join(directory, "*.ckpt"))
-
+def find_checkpoints(start_dir="."):
+    """Recursively find all checkpoint files in the repository."""
     checkpoints = []
-    for pattern in search_paths:
-        checkpoints.extend(glob.glob(pattern))
 
+    print(f"🔍 Searching for checkpoints in {os.path.abspath(start_dir)}...")
+
+    # Walk the entire directory tree
+    for root, dirs, files in os.walk(start_dir):
+        # Skip hidden directories and common excludes
+        dirs[:] = [d for d in dirs if not d.startswith('.') and d not in ['node_modules', '__pycache__', 'venv', 'env']]
+
+        for file in files:
+            if file.endswith('.ckpt'):
+                full_path = os.path.join(root, file)
+                checkpoints.append(full_path)
+
+    print(f"✅ Found {len(checkpoints)} checkpoint(s)")
     return sorted(checkpoints)
 
 
-def find_configs(directory=None):
-    """Find all config files in common locations."""
-    search_paths = [
-        "configs/svc_*.py",
-        "../../configs/svc_*.py",
-    ]
-
-    if directory:
-        search_paths.insert(0, os.path.join(directory, "*.py"))
-
+def find_configs(start_dir="."):
+    """Recursively find all config files in the repository."""
     configs = []
-    for pattern in search_paths:
-        configs.extend(glob.glob(pattern))
 
+    print(f"🔍 Searching for config files in {os.path.abspath(start_dir)}...")
+
+    # Walk the configs directory specifically
+    configs_dir = os.path.join(start_dir, "configs")
+    if os.path.exists(configs_dir):
+        for root, _, files in os.walk(configs_dir):
+            for file in files:
+                if file.startswith('svc_') and file.endswith('.py'):
+                    full_path = os.path.join(root, file)
+                    configs.append(full_path)
+
+    print(f"✅ Found {len(configs)} config file(s)")
     return sorted(configs)
 
 
@@ -111,9 +114,8 @@ def main():
     # 2. Select checkpoint
     print("\n💾 Step 2: Select Checkpoint")
 
-    # Try to find checkpoints near the config
-    checkpoint_dir = os.path.dirname(os.path.dirname(config_path))
-    checkpoints = find_checkpoints(checkpoint_dir)
+    # Search entire repo for checkpoints
+    checkpoints = find_checkpoints(".")
 
     if checkpoints:
         # Sort by validation loss (extract from filename)
