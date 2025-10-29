@@ -45,11 +45,14 @@ trainer = dict(
     gradient_clip_val=None,
     val_check_interval=1000,
     check_val_every_n_epoch=None,
+    max_steps=20000,  # Stop training at 20k steps (optimal range based on analysis)
     callbacks=[
         ModelCheckpoint(
             filename="{epoch}-{step}-{valid_loss:.2f}",
             every_n_train_steps=1000,
-            save_top_k=-1,
+            save_top_k=10,  # Keep best 10 checkpoints by validation loss
+            monitor="valid_loss_epoch",  # Sort by validation loss
+            mode="min",  # Lower validation loss is better
         ),
         LearningRateMonitor(logging_interval="step"),
     ],

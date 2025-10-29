@@ -68,6 +68,18 @@ def get_step(filename):
     return int(match.group(1)) if match else -1
 
 
+def get_valid_loss(filename):
+    """Extract validation loss from checkpoint filename."""
+    match = re.search(r"valid_loss=([\d.]+)", filename)
+    if match:
+        loss_str = match.group(1).rstrip('.')
+        try:
+            return float(loss_str)
+        except ValueError:
+            return float('inf')
+    return float('inf')  # If no valid_loss in filename, treat as worst
+
+
 # logs path
 fishsvc_logs_path = "logs"
 # must match [HiFiSVC or DiffSVC]
@@ -142,37 +154,51 @@ while True:
                         os.path.join(fishsvc_dest_path, "models"),
                     )
 
-        # Keep only the last four checkpoints in the source checkpoint directory
+        # Keep only the best 10 checkpoints by validation loss in the source checkpoint directory
         for d in os.listdir(fishsvc_chkpt_path):
             checkpoints_path = os.path.join(fishsvc_chkpt_path, d, "checkpoints")
             if os.path.exists(checkpoints_path):
-                checkpoints = sorted(
-                    [
-                        os.path.join(checkpoints_path, f)
-                        for f in os.listdir(checkpoints_path)
-                    ],
-                    key=get_step,
-                    reverse=True,
-                )
-                for checkpoint in checkpoints[4:]:
-                    if ".ipynb_checkpoints" not in checkpoint:
+                checkpoints = [
+                    os.path.join(checkpoints_path, f)
+                    for f in os.listdir(checkpoints_path)
+                    if f.endswith('.ckpt') and ".ipynb_checkpoints" not in f
+                ]
+
+                # Sort by validation loss (lower is better)
+                checkpoints_sorted = sorted(checkpoints, key=get_valid_loss)
+
+                # Delete all except best 10
+                for checkpoint in checkpoints_sorted[10:]:
+                    try:
                         os.remove(checkpoint)
+                        logging.info("Deleted checkpoint (not in top 10): %s", os.path.basename(checkpoint))
+                    except Exception as e:
+                        logging.warning("Failed to delete %s: %s", checkpoint, e)
             else:
                 logging.warning(
                     "No checkpoints folder found in %s yet, skipping cleanup", d
                 )
 
         if args.dest_path:
-            # Keep only the last four checkpoints in the destination checkpoint directory
+            # Keep only the best 10 checkpoints by validation loss in Google Drive
             models_path = os.path.join(fishsvc_dest_path, "models")
             if os.path.exists(models_path):
-                checkpoints = sorted(
-                    [os.path.join(models_path, f) for f in os.listdir(models_path)],
-                    key=get_step,
-                    reverse=True,
-                )
-                for checkpoint in checkpoints[4:]:
-                    os.remove(checkpoint)
+                checkpoints = [
+                    os.path.join(models_path, f)
+                    for f in os.listdir(models_path)
+                    if f.endswith('.ckpt')
+                ]
+
+                # Sort by validation loss (lower is better)
+                checkpoints_sorted = sorted(checkpoints, key=get_valid_loss)
+
+                # Delete all except best 10
+                for checkpoint in checkpoints_sorted[10:]:
+                    try:
+                        os.remove(checkpoint)
+                        logging.info("Deleted Drive checkpoint (not in top 10): %s", os.path.basename(checkpoint))
+                    except Exception as e:
+                        logging.warning("Failed to delete Drive checkpoint %s: %s", checkpoint, e)
             else:
                 logging.warning(
                     "No models folder found in %s yet, skipping cleanup",

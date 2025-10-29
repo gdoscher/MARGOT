@@ -15,13 +15,15 @@ dataloader = dict(
     train=dict(
         batch_size=20,
         shuffle=True,
-        num_workers=2,
-        persistent_workers=True,
+        num_workers=0,  # Set to 0 to avoid shared memory issues in Docker
+        persistent_workers=False,  # Must be False when num_workers=0
+        pin_memory=False,  # Not needed for CPU/MPS training
     ),
     valid=dict(
         batch_size=2,
         shuffle=False,
-        num_workers=2,
-        persistent_workers=True,
+        num_workers=0,  # Set to 0 to avoid shared memory issues in Docker
+        persistent_workers=False,  # Must be False when num_workers=0
+        pin_memory=False,  # Not needed for CPU/MPS training
     ),
 )
