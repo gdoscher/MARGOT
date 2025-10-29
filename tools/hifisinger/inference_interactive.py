@@ -10,6 +10,15 @@ from pathlib import Path
 from inference import HiFiSingerSVCInference
 from mmengine import Config
 
+# Enable readline for better terminal input editing (arrow keys, etc.)
+try:
+    import readline
+    # Enable tab completion for file paths
+    readline.parse_and_bind("tab: complete")
+except ImportError:
+    # readline not available on Windows by default
+    pass
+
 
 def find_checkpoints(start_dir="."):
     """Recursively find all checkpoint files in the repository."""
@@ -148,7 +157,11 @@ def main():
 
     # 3. Input audio file
     print("\n🎵 Step 3: Input Audio File")
+    print("  💡 Tip: Drag & drop the file into terminal, or paste the full path")
     input_path = input("Enter path to input audio file (.wav, .mp3, etc.): ").strip()
+
+    # Remove quotes if user pasted path with them
+    input_path = input_path.strip('"').strip("'")
 
     if not os.path.exists(input_path):
         print(f"❌ Input file not found: {input_path}")
